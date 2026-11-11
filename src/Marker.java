@@ -56,7 +56,43 @@ public class Marker {
      * Example: a = "ACGTAC", b = "TTACGT", k = 4: the words of a are ACGT, CGTA, GTAC; only ACGT is in b, so the answer is 1.
      */
     public static int sharedWords(String a, String b, int k) {
-        // TODO Mission 4
-        return -1;
+        int n = a.length(), m = b.length();
+        if (k <= 0 || n < k || m < k) return 0;
+        final long MOD = 1_000_000_007L, BASE = 131;
+        long high = 1;                                   // BASE^(k-1) mod MOD
+        for (int i = 1; i < k; i++) high = high * BASE % MOD;
+
+        // hashes of all windows of b -> start positions with that hash
+        HashMap<Long, ArrayList<Integer>> table = new HashMap<>();
+        long h = 0;
+        for (int i = 0; i < k; i++) h = (h * BASE + code(b.charAt(i))) % MOD;
+        table.computeIfAbsent(h, x -> new ArrayList<>()).add(0);
+        for (int s = 1; s + k <= m; s++) {
+            h = ((h - code(b.charAt(s - 1)) * high % MOD) % MOD + MOD) % MOD;   // remove the old first letter
+            h = (h * BASE + code(b.charAt(s + k - 1))) % MOD;                   // add the new last letter
+            table.computeIfAbsent(h, x -> new ArrayList<>()).add(s);
+        }
+
+        int count = 0;
+        h = 0;
+        for (int i = 0; i < k; i++) h = (h * BASE + code(a.charAt(i))) % MOD;
+        for (int s = 0; s + k <= n; s++) {
+            if (s > 0) {
+                h = ((h - code(a.charAt(s - 1)) * high % MOD) % MOD + MOD) % MOD;
+                h = (h * BASE + code(a.charAt(s + k - 1))) % MOD;
+            }
+            ArrayList<Integer> cand = table.get(h);
+            if (cand == null) continue;
+            for (int t : cand) {                         // equal hash is not proof: compare the letters
+                boolean same = true;
+                for (int q = 0; q < k; q++) if (a.charAt(s + q) != b.charAt(t + q)) { same = false; break; }
+                if (same) { count++; break; }
+            }
+        }
+        return count;
+    }
+
+    private static int code(char c) {
+        switch (c) { case 'A': return 1; case 'C': return 2; case 'G': return 3; default: return 4; }
     }
 }
