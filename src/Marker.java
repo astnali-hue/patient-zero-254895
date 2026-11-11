@@ -11,8 +11,16 @@ public class Marker {
      * Example: p = "ACGAC" gives [0, 0, 0, 1, 2]. The last number is the "Border length" line.
      */
     public static int[] prefixFunction(String p) {
-        // TODO Mission 3a
-        return new int[p.length()];
+        // pi[i] = length of the longest proper border of p[0..i]. k = length of the border of the previous prefix.
+        int m = p.length();
+        int[] pi = new int[m];
+        int k = 0;
+        for (int i = 1; i < m; i++) {
+            while (k > 0 && p.charAt(i) != p.charAt(k)) k = pi[k - 1]; // fall back to a shorter border
+            if (p.charAt(i) == p.charAt(k)) k++;
+            pi[i] = k;
+        }
+        return pi;
     }
 
     /**
@@ -22,8 +30,21 @@ public class Marker {
      * the first one is "First hit" (-1 when there is none).
      */
     public static int[] findAll(String text, String p) {
-        // TODO Mission 3b
-        return new int[0];
+        int n = text.length(), m = p.length();
+        if (m == 0 || m > n) return new int[0];
+        int[] pi = prefixFunction(p);
+        int[] buf = new int[n];
+        int cnt = 0;
+        int k = 0; // number of marker letters matched so far
+        for (int i = 0; i < n; i++) {            // i only moves forward
+            while (k > 0 && text.charAt(i) != p.charAt(k)) k = pi[k - 1];
+            if (text.charAt(i) == p.charAt(k)) k++;
+            if (k == m) {                         // full match ends at i
+                buf[cnt++] = i - m + 1;
+                k = pi[k - 1];                    // keep the border: the next match may overlap this one
+            }
+        }
+        return java.util.Arrays.copyOf(buf, cnt);
     }
 
     /**
